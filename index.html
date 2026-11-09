@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Найди ошибку — Математика 4 класс</title>
+<style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    body {
+        font-family: 'Comic Sans MS', 'Marker Felt', cursive, sans-serif;
+        background: linear-gradient(180deg, #4a90e2 0%, #7bb3f0 50%, #b8d8f5 100%);
+        min-height: 100vh;
+        padding: 20px;
+        overflow-x: hidden;
+        position: relative;
+    }
+    
+    /* Снежинки */
+    .snowflake {
+        position: fixed;
+        top: -10px;
+        color: white;
+        font-size: 1.5em;
+        user-select: none;
+        pointer-events: none;
+        animation: fall linear infinite;
+        z-index: 0;
+    }
+    @keyframes fall {
+        to { transform: translateY(105vh) rotate(360deg); }
+    }
+    
+    .container {
+        max-width: 900px;
+        margin: 0 auto;
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 25px;
+        padding: 30px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        position: relative;
+        z-index: 1;
+        border: 4px solid #fff;
+    }
+    
+    h1 {
+        text-align: center;
+        color: #2c5f9e;
+        font-size: 2.2em;
+        margin-bottom: 10px;
+        text-shadow: 2px 2px 0 #fff;
+    }
+    
+    .progress {
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+        margin-bottom: 20px;
+    }
+    .progress-dot {
+        width: 40px; height: 40px;
+        border-radius: 50%;
+        background: #d0d0d0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        color: white;
+        font-size: 1.2em;
+        transition: all 0.3s;
+    }
+    .progress-dot.active { background: #ff9500; transform: scale(1.2); }
+    .progress-dot.done { background: #4caf50; }
+    
+    .task-card {
+        background: #fff8e7;
+        border: 3px dashed #ff9500;
+        border-radius: 20px;
+        padding: 25px;
+        margin-bottom: 20px;
+    }
+    
+    .task-title {
+        color: #d35400;
+        font-size: 1.5em;
+        margin-bottom: 10px;
+    }
+    
+    .task-text {
+        color: #333;
+        font-size: 1.1em;
+        margin-bottom: 20px;
+        line-height: 1.5;
+    }
+    
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        background: white;
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        margin-bottom: 20px;
+    }
+    
+    th {
+        background: #2c5f9e;
+        color: white;
+        padding: 12px;
+        font-size: 1.1em;
+    }
+    
+    td {
+        padding: 15px;
+        text-align: center;
+        border-bottom: 1px solid #eee;
+        font-size: 1.1em;
+        transition: all 0.2s;
+    }
+    
+    td.clickable {
+        cursor: pointer;
+        background: #fffde7;
+    }
+    td.clickable:hover {
+        background: #fff59d;
+        transform: scale(1.02);
+    }
+    
+    td.correct {
+        background: #c8e6c9 !important;
+        text-decoration: line-through;
+        color: #c62828;
+        font-weight: bold;
+    }
+    td.correct::after {
+        content: " → " attr(data-answer);
+        color: #2e7d32;
+        text-decoration: none;
+    }
+    
+    .btn {
+        background: #ff9500;
+        color: white;
+        border: none;
+        padding: 12px 25px;
+        border-radius: 15px;
+        font-size: 1.1em;
+        cursor: pointer;
+        font-family: inherit;
+        box-shadow: 0 4px 0 #cc7700;
+        transition: all 0.1s;
+        margin: 5px;
+    }
+    .btn:hover { transform: translateY(-2px); box-shadow: 0 6px 0 #cc7700; }
+    .btn:active { transform: translateY(2px); box-shadow: 0 2px 0 #cc7700; }
+    
+    .btn-hint { background: #9c27b0; box-shadow: 0 4px 0 #6a1b9a; }
+    .btn-hint:hover { box-shadow: 0 6px 0 #6a1b9a; }
+    .btn-next { background: #4caf50; box-shadow: 0 4px 0 #2e7d32; }
+    .btn-next:hover { box-shadow: 0 6px 0 #2e7d32; }
+    
+    .feedback {
+        padding: 15px;
+        border-radius: 15px;
+        margin-top: 15px;
+        font-size: 1.1em;
+        text-align: center;
+        display: none;
+    }
+    .feedback.success { background: #c8e6c9; color: #1b5e20; display: block; }
+    .feedback.error { background: #ffcdd2; color: #b71c1c; display: block; }
+    .feedback.hint { background: #e1bee7; color: #4a148c; display: block; }
+    
+    /* Модальное окно */
+    .modal {
+        display: none;
+        position: fixed;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        background: rgba(0,0,0,0.6);
+        z-index: 100;
+        justify-content: center;
+        align-items: center;
+    }
+    .modal.active { display: flex; }
+    .modal-content {
+        background: white;
+        padding: 30px;
+        border-radius: 25px;
+        max-width: 400px;
+        width: 90%;
+        text-align: center;
+        border: 4px solid #ff9500;
+    }
+    .modal-content h2 { color: #2c5f9e; margin-bottom: 15px; }
+    .modal-content input {
+        width: 100%;
+        padding: 12px;
+        font-size: 1.3em;
+        border: 3px solid #4a90e2;
+        border-radius: 10px;
+        text-align: center;
+        margin: 15px 0;
+        font-family: inherit;
+    }
+    
+    .final-screen {
+        text-align: center;
+        padding: 30px;
+    }
+    .final-screen h2 {
+        color: #2c5f9e;
+        font-size: 2em;
+        margin-bottom: 20px;
+    }
+    .stars {
+        font-size: 3em;
+        margin: 20px 0;
+    }
+    
+    .controls { text-align: center; margin-top: 15px; }
+</style>
+</head>
+<body>
+
+<div class="container">
+    <h1>🔍 Найди ошибку! ❄️</h1>
+    
+    <div class="progress" id="progress"></div>
+    
+    <div id="game-area"></div>
+</div>
+
+<!-- Модальное окно для ввода ответа -->
+<div class="modal" id="modal">
+    <div class="modal-content">
+        <h2 id="modal-title">Введи правильный ответ</h2>
+        <p id="modal-question"></p>
+        <input type="text" id="modal-input" placeholder="Число без «руб.»">
+        <div>
+            <button class="btn" onclick="checkAnswer()">Проверить ✓</button>
+            <button class="btn btn-hint" onclick="closeModal()">Отмена</button>
+        </div>
+    </div>
+</div>
+
+<script>
+// Данные заданий
+const tasks = [
+    {
+        title: "📚 Задание 1. Канцелярский магазин",
+        text: "Посмотри на чек. В одной из строк кассир ошибся при подсчёте стоимости. Кликни на ячейку с ошибкой и запиши верный ответ.",
+        headers: ["Товар", "Цена", "Количество", "Стоимость"],
+        rows: [
+            ["Тетрадь в клетку", "45 руб.", "4 шт.", "180 руб."],
+            ["Альбом для рисования", "60 руб.", "3 шт.", "160 руб."], // ОШИБКА здесь
+            ["Набор цветных карандашей", "240 руб.", "2 шт.", "480 руб."]
+        ],
+        errorRow: 1,
+        errorCol: 3,
+        correctAnswer: "180",
+        explanation: "60 × 3 = 180 руб. Кассир ошибся в умножении!",
+        hint: "Подсказка: умножь цену на количество в каждой строке."
+    },
+    {
+        title: "🥟 Задание 2. Школьный буфет",
+        text: "Миша покупал обед. Верно ли кассир посчитал сдачу? Кликни на ячейку с ошибкой и исправь её.",
+        headers: ["Строка", "Показатель", "Значение"],
+        rows: [
+            ["Пирожок с капустой", "Стоимость", "80 руб."],
+            ["Какао", "Стоимость", "70 руб."],
+            ["Итого к оплате", "Сумма", "150 руб."],
+            ["Внесено", "Сумма", "200 руб."],
+            ["Сдача", "Разность", "60 руб."] // ОШИБКА здесь
+        ],
+        errorRow: 4,
+        errorCol: 2,
+        correctAnswer: "50",
+        explanation: "200 − 150 = 50 руб. Правильная сдача — 50 рублей!",
+        hint: "Подсказка: сдача = внесено − итого."
+    },
+    {
+        title: "🧤 Задание 3. Зимняя экипировка",
+        text: "Мама покупала зимние вещи. В таблице есть ошибка в подсчёте стоимости. Найди её!",
+        headers: ["Товар", "Цена за 1 шт.", "Количество", "Стоимость"],
+        rows: [
+            ["Шапка зимняя", "800 руб.", "2 шт.", "1600 руб."],
+            ["Шарф вязаный", "500 руб.", "2 шт.", "1000 руб."],
+            ["Варежки (пара)", "400 руб.", "2 пары", "400 руб."], // ОШИБКА здесь
+            ["Варежки (детские)", "300 руб.", "3 шт.", "900 руб."]
+        ],
+        errorRow: 2,
+        errorCol: 3,
+        correctAnswer: "800",
+        explanation: "400 × 2 = 800 руб. Кассир забыл умножить на 2!",
+        hint: "Подсказка: проверь, умножена ли цена на количество."
+    }
+];
+
+let currentTask = 0;
+let score = 0;
+let currentClickedCell = null;
+
+// Создаём снежинки
+function createSnowflakes() {
+    const symbols = ['❄', '❅', '❆', '*'];
+    for (let i = 0; i < 30; i++) {
+        const s = document.createElement('div');
+        s.className = 'snowflake';
+        s.textContent = symbols[Math.floor(Math.random() * symbols.length)];
+        s.style.left = Math.random() * 100 + 'vw';
+        s.style.animationDuration = (5 + Math.random() * 10) + 's';
+        s.style.animationDelay = Math.random() * 10 + 's';
+        s.style.fontSize = (0.8 + Math.random() * 1.5) + 'em';
+        s.style.opacity = 0.5 + Math.random() * 0.5;
+        document.body.appendChild(s);
+    }
+}
+
+// Отрисовка прогресса
+function renderProgress() {
+    const p = document.getElementById('progress');
+    p.innerHTML = '';
+    for (let i = 0; i < tasks.length; i++) {
+        const dot = document.createElement('div');
+        dot.className = 'progress-dot';
+        if (i < currentTask) dot.classList.add('done');
+        if (i === currentTask) dot.classList.add('active');
+        dot.textContent = i + 1;
+        p.appendChild(dot);
+    }
+}
+
+// Отрисовка задания
+function renderTask() {
+    if (currentTask >= tasks.length) {
+        renderFinal();
+        return;
+    }
+    const task = tasks[currentTask];
+    const area = document.getElementById('game-area');
+    
+    let html = `
+        <div class="task-card">
+            <div class="task-title">${task.title}</div>
+            <div class="task-text">${task.text}</div>
+            <table>
+                <thead><tr>`;
+    task.headers.forEach(h => html += `<th>${h}</th>`);
+    html += `</tr></thead><tbody>`;
+    
+    task.rows.forEach((row, ri) => {
+        html += '<tr>';
+        row.forEach((cell, ci) => {
+            const isClickable = (ri === task.errorRow && ci === task.errorCol);
+            html += `<td ${isClickable ? 'class="clickable" onclick="clickCell(this, ' + ri + ', ' + ci + ')"' : ''}>${cell}</td>`;
+        });
+        html += '</tr>';
+    });
+    
+    html += `</tbody></table>
+            <div class="feedback" id="feedback"></div>
+            <div class="controls">
+                <button class="btn btn-hint" onclick="showHint()">💡 Подсказка</button>
+            </div>
+        </div>`;
+    
+    area.innerHTML = html;
+    renderProgress();
+}
+
+// Клик по ячейке
+function clickCell(elem, ri, ci) {
+    const task = tasks[currentTask];
+    if (ri === task.errorRow && ci === task.errorCol) {
+        currentClickedCell = elem;
+        openModal(task);
+    } else {
+        const fb = document.getElementById('feedback');
+        fb.className = 'feedback error';
+        fb.textContent = '❌ Здесь всё верно! Поищи ошибку в другой ячейке.';
+        setTimeout(() => { fb.className = 'feedback'; }, 2500);
+    }
+}
+
+// Модальное окно
+function openModal(task) {
+    document.getElementById('modal-question').textContent = 
+        `Какое число должно быть вместо "${task.rows[task.errorRow][task.errorCol]}"?`;
+    document.getElementById('modal-input').value = '';
+    document.getElementById('modal').classList.add('active');
+    setTimeout(() => document.getElementById('modal-input').focus(), 100);
+}
+
+function closeModal() {
+    document.getElementById('modal').classList.remove('active');
+}
+
+// Проверка ответа
+function checkAnswer() {
+    const task = tasks[currentTask];
+    const input = document.getElementById('modal-input').value.trim().replace(/\s|руб\.?/gi, '');
+    const fb = document.getElementById('feedback');
+    
+    if (input === task.correctAnswer) {
+        // Успех!
+        currentClickedCell.classList.add('correct');
+        currentClickedCell.setAttribute('data-answer', task.correctAnswer + ' руб.');
+        fb.className = 'feedback success';
+        fb.innerHTML = `✅ Молодец! ${task.explanation}`;
+        score++;
+        closeModal();
+        
+        // Кнопка "Далее"
+        const controls = document.querySelector('.controls');
+        controls.innerHTML = `<button class="btn btn-next" onclick="nextTask()">
+            ${currentTask === tasks.length - 1 ? '🏆 Посмотреть результат' : '➡️ Следующее задание'}
+        </button>`;
+    } else {
+        fb.className = 'feedback error';
+        fb.textContent = '❌ Неверно. Попробуй ещё раз! Посчитай внимательно.';
+        document.getElementById('modal-input').value = '';
+        document.getElementById('modal-input').focus();
+    }
+}
+
+function showHint() {
+    const task = tasks[currentTask];
+    const fb = document.getElementById('feedback');
+    fb.className = 'feedback hint';
+    fb.textContent = '💡 ' + task.hint;
+}
+
+function nextTask() {
+    currentTask++;
+    renderTask();
+}
+
+// Финальный экран
+function renderFinal() {
+    const area = document.getElementById('game-area');
+    let stars = '';
+    for (let i = 0; i < 3; i++) {
+        stars += i < score ? '⭐' : '☆';
+    }
+    
+    let message = '';
+    if (score === 3) message = 'Превосходно! Ты настоящий математический детектив! 🕵️';
+    else if (score === 2) message = 'Отлично! Почти всё верно! 👏';
+    else if (score === 1) message = 'Хорошо! Но стоит потренироваться ещё. 📚';
+    else message = 'Не расстраивайся! Попробуй ещё раз — всё получится! 💪';
+    
+    area.innerHTML = `
+        <div class="final-screen">
+            <h2>🎉 Игра окончена!</h2>
+            <div class="stars">${stars}</div>
+            <p style="font-size:1.3em; color:#333; margin:20px 0;">
+                Ты нашёл <b>${score}</b> из <b>3</b> ошибок!
+            </p>
+            <p style="font-size:1.2em; color:#2c5f9e;">${message}</p>
+            <button class="btn btn-next" onclick="restart()" style="margin-top:20px;">🔄 Играть снова</button>
+        </div>`;
+    renderProgress();
+}
+
+function restart() {
+    currentTask = 0;
+    score = 0;
+    renderTask();
+}
+
+// Enter в модальном окне
+document.getElementById('modal-input').addEventListener('keypress', e => {
+    if (e.key === 'Enter') checkAnswer();
+});
+
+// Старт
+createSnowflakes();
+renderTask();
+</script>
+
+</body>
+</html>
